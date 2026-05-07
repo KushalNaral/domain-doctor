@@ -92,7 +92,7 @@ func Check(domain string) *DomainHealth {
 	return health
 }
 
-func (h *DomainHealth) RenderReport() string {
+func (h *DomainHealth) RenderReport(showHint bool) string {
 	var b strings.Builder
 
 	title := headerTitleStyle.Render("🩺 Domain Health Report")
@@ -132,7 +132,9 @@ func (h *DomainHealth) RenderReport() string {
 		b.WriteString("\n  " + okStyle.Render("✅  All checks passed. Your domain is healthy!") + "\n")
 	}
 
-	b.WriteString("\n  " + hintStyle.Render("Press Enter or Esc to exit") + "\n")
+	if showHint {
+		b.WriteString("\n  " + hintStyle.Render("Press Enter or Esc to exit") + "\n")
+	}
 	return b.String()
 }
 

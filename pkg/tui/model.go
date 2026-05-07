@@ -121,7 +121,7 @@ func doneView(m Model) string {
 	if m.err != nil {
 		return "\n  Error: " + m.err.Error() + "\n"
 	}
-	return "\n" + m.result.RenderReport()
+	return "\n" + m.result.RenderReport(true)
 }
 
 func runCheck(domain string) tea.Cmd {

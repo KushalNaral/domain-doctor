@@ -53,7 +53,7 @@ func TestRenderReport_AllPassing(t *testing.T) {
 		HasSPF:      true,
 		HasDMARC:    true,
 	}
-	out := h.RenderReport()
+	out := h.RenderReport(false)
 
 	if !strings.Contains(out, "example.com") {
 		t.Error("expected domain name in report")
@@ -77,7 +77,7 @@ func TestRenderReport_WithIssues(t *testing.T) {
 		Domain:  "broken.example",
 		Issues:  []string{"No MX records found. The domain cannot receive email."},
 	}
-	out := h.RenderReport()
+	out := h.RenderReport(false)
 
 	if !strings.Contains(out, "Critical Issues") {
 		t.Error("expected Critical Issues section")
@@ -102,7 +102,7 @@ func TestRenderReport_WithWarnings(t *testing.T) {
 		HasDMARC:    true,
 		Warnings:    []string{"DMARC policy is set to 'p=none'."},
 	}
-	out := h.RenderReport()
+	out := h.RenderReport(false)
 
 	if !strings.Contains(out, "Warnings") {
 		t.Error("expected Warnings section")
@@ -117,7 +117,7 @@ func TestRenderReport_WithWarnings(t *testing.T) {
 
 func TestRenderReport_ContainsHint(t *testing.T) {
 	h := &DomainHealth{Domain: "example.com"}
-	out := h.RenderReport()
+	out := h.RenderReport(true)
 	if !strings.Contains(out, "Press Enter or Esc to exit") {
 		t.Error("expected exit hint in report")
 	}
