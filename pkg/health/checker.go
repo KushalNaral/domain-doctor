@@ -92,53 +92,64 @@ func Check(domain string) *DomainHealth {
 	return health
 }
 
-// PrintReport prints a colorized health report to standard output
-func (h *DomainHealth) PrintReport() {
-	const (
-		ColorReset  = "\033[0m"
-		ColorRed    = "\033[31m"
-		ColorGreen  = "\033[32m"
-		ColorYellow = "\033[33m"
-		ColorBold   = "\033[1m"
-	)
+func (h *DomainHealth) RenderReport() string {
+	var b strings.Builder
 
-	fmt.Printf("\n%s🩺 Domain Health Report for: %s%s\n", ColorBold, h.Domain, ColorReset)
-	fmt.Println(strings.Repeat("-", 50))
+	title := headerTitleStyle.Render("🩺 Domain Health Report")
+	domain := domainStyle.Render(h.Domain)
+	b.WriteString(headerCardStyle.Render(title+"\n"+domain) + "\n\n")
 
-	printStatus("Live (A/AAAA)", h.HasARecord)
-	printStatus("Email Receiver (MX)", h.HasMXRecord)
-	printStatus("Sender Policy (SPF)", h.HasSPF)
-	printStatus("Domain Auth (DMARC)", h.HasDMARC)
+	b.WriteString(renderStatus("Live (A/AAAA)", h.HasARecord) + "\n")
+	b.WriteString(renderStatus("Email Receiver (MX)", h.HasMXRecord) + "\n")
+	b.WriteString(renderStatus("Sender Policy (SPF)", h.HasSPF) + "\n")
+	b.WriteString(renderStatus("Domain Auth (DMARC)", h.HasDMARC) + "\n")
+
+	b.WriteString("\n" + dividerStyle.Render(strings.Repeat("─", 50)) + "\n")
+
+	passed := 0
+	for _, c := range []bool{h.HasARecord, h.HasMXRecord, h.HasSPF, h.HasDMARC} {
+		if c {
+			passed++
+		}
+	}
+	b.WriteString(renderScoreBar(passed, 4) + "\n")
 
 	if len(h.Warnings) > 0 {
-		fmt.Printf("\n%s⚠️  Warnings:%s\n", ColorYellow, ColorReset)
+		b.WriteString("\n  " + warnTitleStyle.Render("⚠  Warnings") + "\n")
 		for _, w := range h.Warnings {
-			fmt.Printf("  - %s\n", w)
+			b.WriteString("    " + warnBullet.Render("·") + " " + w + "\n")
 		}
 	}
 
 	if len(h.Issues) > 0 {
-		fmt.Printf("\n%s❌ Critical Issues:%s\n", ColorRed, ColorReset)
-		for _, idx := range h.Issues {
-			fmt.Printf("  - %s\n", idx)
+		b.WriteString("\n  " + critTitleStyle.Render("✖  Critical Issues") + "\n")
+		for _, issue := range h.Issues {
+			b.WriteString("    " + critBullet.Render("·") + " " + issue + "\n")
 		}
 	}
 
 	if len(h.Issues) == 0 && len(h.Warnings) == 0 {
-		fmt.Printf("\n%s✅ Your domain health is perfect!%s\n", ColorGreen, ColorReset)
+		b.WriteString("\n  " + okStyle.Render("✅  All checks passed. Your domain is healthy!") + "\n")
 	}
-	fmt.Println()
+
+	b.WriteString("\n  " + hintStyle.Render("Press Enter or Esc to exit") + "\n")
+	return b.String()
 }
 
-func printStatus(name string, passed bool) {
-	const (
-		ColorReset = "\033[0m"
-		ColorRed   = "\033[31m"
-		ColorGreen = "\033[32m"
-	)
+func renderStatus(name string, passed bool) string {
+	var badge string
 	if passed {
-		fmt.Printf("[ %sPASS%s ] %s\n", ColorGreen, ColorReset, name)
+		badge = passBadge.Render("✓ PASS")
 	} else {
-		fmt.Printf("[ %sFAIL%s ] %s\n", ColorRed, ColorReset, name)
+		badge = failBadge.Render("✗ FAIL")
 	}
+	return "  " + badge + " " + checkLabel.Render(name)
+}
+
+func renderScoreBar(passed, total int) string {
+	filled := strings.Repeat("█", passed)
+	empty := strings.Repeat("░", total-passed)
+	bar := scoreBarFill.Render(filled) + scoreBarEmpty.Render(empty)
+	label := fmt.Sprintf(" %d/%d checks passed", passed, total)
+	return "  " + bar + scoreBarLabel.Render(label)
 }
